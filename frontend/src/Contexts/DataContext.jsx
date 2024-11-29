@@ -8,6 +8,7 @@ export const DataProvider = ({ children }) => {
     const [currentCode, setCurrentCode] = useState("");
     const [currentOutput, setCurrentOutput] = useState("");
     const {connected, socket} = useSocket();
+    const [running, setRunning] = useState(false)
     useEffect(() => {
         switch (currentLanguage) {
             case 'c':
@@ -35,7 +36,7 @@ if __name__ == "__main__":
 
             case 'java':
                 setCurrentCode(`
-public class ${socket.id} {
+public class Main {
     public static void main(String[] args) {
         System.out.println("Hello, World!");
     }
@@ -68,7 +69,8 @@ int main() {
             currentCode,
             setCurrentCode,
             currentOutput,
-            setCurrentOutput
+            setCurrentOutput,
+            running, setRunning
         }}>
             {children}
         </DataContext.Provider>

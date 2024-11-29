@@ -1,6 +1,8 @@
 const path = require('path');
 const { spawn } = require('child_process');
 
+let containerID = []
+
 async function Run(filePath, image, socket) {
     if (!image) {
         throw new Error('Image is required');
@@ -17,7 +19,9 @@ async function Run(filePath, image, socket) {
     let command = 'docker';
     let args = [
         'run',
+        '--rm',
         '-v', `${fileDir}:/app`, // Mount file directory to container
+        '-i',
         '-w', '/app', // Set working directory inside the container
         image // Docker image
     ];
@@ -50,7 +54,13 @@ async function Run(filePath, image, socket) {
         // Capture stdout
         runProcess.stdout.on('data', (data) => {
             const decodedOutput = new TextDecoder().decode(data);
-            socket.emit('code-output', decodedOutput);
+            socket.emit('code-output', decodedOutput+"\n");
+
+            // Check if process is asking for input
+            if (decodedOutput.includes('Enter input') || decodedOutput.includes('\n') || decodedOutput.includes(':') || decodedOutput.includes('=')) {
+                console.log("Send input.........................................................")
+                socket.emit('prompt-user-input', 'Please provide input:'); // Emit prompt to frontend
+            }
         });
 
         // Capture stderr
@@ -72,27 +82,18 @@ async function Run(filePath, image, socket) {
             }
         });
 
-        // Handle any errors during the spawning process
+        // Handle process error
         runProcess.on('error', (err) => {
             console.error('Error occurred:', err);
             socket.emit('error', err);
             reject(err);
         });
 
-        // Handle user input from the frontend (via socket)
+        // Handle user input from frontend (via socket)
         socket.on('user-input', (input) => {
             if (runProcess.stdin.writable) {
-                runProcess.stdin.write(input); // Write user input to stdin of the running process
-                socket.emit('code-output', `Input received: ${input}`); // Notify frontend that input was received
-            }
-        });
-
-        // Emit a prompt to frontend when the process expects input
-        runProcess.stdout.on('data', (data) => {
-            const decodedOutput = new TextDecoder().decode(data);
-            // Check if the output contains a prompt asking for input
-            if (decodedOutput.includes("Enter input")) {
-                socket.emit('prompt-user-input', 'Please provide input:'); // Emit prompt to frontend
+                runProcess.stdin.write(input + '\n'); // Write user input to stdin of the running process
+                socket.emit('code-output', `${input}`); // Notify frontend that input was received
             }
         });
     });

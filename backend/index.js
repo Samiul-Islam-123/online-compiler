@@ -11,6 +11,8 @@ const io = SocketIO(Server, {
 });
 const path = require('path');
 const Run = require('./Execute');
+const { spawn } = require('child_process');
+
 
 app.get("/", (req,res) => {
     res.send("Just for testing...");
@@ -38,7 +40,13 @@ async function ExecuteCode(userID, language, code, socket){
     const extension = match ? match.ext : null
 
     //creating unique file name
-    const filename = userID + extension;
+    let filename;
+    if(language != 'java'){
+        filename = userID + extension
+    }
+
+    else
+        filename = 'Main.java'
     
     //saving it into temp dir
     fs.writeFileSync('temp/' + filename, code, (error)=>{

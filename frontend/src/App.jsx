@@ -1,20 +1,22 @@
 // src/App.js
 
 import React, { useEffect, useState } from 'react';
-import { Row, Col, Button } from 'antd';
+import { Row, Col, Button, Spin } from 'antd';
 import CodeEditor from './Components/CodeEditor';
 import CodeOutput from './Components/CodeOutput';
 import LanguageSelector from './Components/LanguageSelector'; // Import the LanguageSelector component
 import { useData } from './Contexts/DataContext';
 import { useSocket } from './Contexts/SocketContext';
+import DisconnectedMessage from './Components/DisconnectedMessage';
 
 function App() {
 
-  const {currentLanguage, currentCode, currentOutput} = useData();
+  const {currentLanguage, currentCode, currentOutput, setCurrentOutput, setRunning, running} = useData();
   const{connected, socket} = useSocket();
   
   const sendCodeToServer =() => {
     if(connected){
+      setRunning(true);
       socket.emit('code', ({
         code : currentCode,
         language : currentLanguage
@@ -28,21 +30,27 @@ function App() {
 
   return (
     <div style={{ padding: '20px', backgroundColor: '#001f3d', minHeight: '90vh' }}>
-        {connected===false && (<>
-        <h2 style={{
-          color: '#fff',
-        }}>
-          Unable to connect with server ... your code may not run :(
-        </h2>
-        </>)}
+        <DisconnectedMessage connected={connected} />
       <Row gutter={16} align="top">
         {/* Language Selector Column */}
-        <Col xs={23} sm={23} md={23} lg={23} xl={23}>
+        <Col xs={22} sm={22} md={22} lg={22} xl={22}>
           <LanguageSelector/>
         </Col>
 
         <Col >
-          <Button onClick={sendCodeToServer}>Run</Button>
+          <Button disabled={running} onClick={sendCodeToServer}>
+
+            {running=== true ? (<>
+              <Spin />
+            </>) : "Run"}
+
+          </Button>
+        </Col>
+
+        <Col >
+          <Button onClick={() => {
+            setCurrentOutput("")
+          }}>Clear</Button>
         </Col>
 
         {/* Code Editor Column */}
