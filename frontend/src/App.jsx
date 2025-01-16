@@ -1,66 +1,89 @@
-// src/App.js
-
-import React, { useEffect, useState } from 'react';
-import { Row, Col, Button, Spin } from 'antd';
+import React, { useEffect } from 'react';
+import { Row, Col, Button, Spin, Card, Space, Divider } from 'antd';
 import CodeEditor from './Components/CodeEditor';
 import CodeOutput from './Components/CodeOutput';
-import LanguageSelector from './Components/LanguageSelector'; // Import the LanguageSelector component
+import LanguageSelector from './Components/LanguageSelector';
 import { useData } from './Contexts/DataContext';
 import { useSocket } from './Contexts/SocketContext';
 import DisconnectedMessage from './Components/DisconnectedMessage';
 
 function App() {
+  const { currentLanguage, currentCode, currentOutput, setCurrentOutput, setRunning, running } = useData();
+  const { connected, socket } = useSocket();
 
-  const {currentLanguage, currentCode, currentOutput, setCurrentOutput, setRunning, running} = useData();
-  const{connected, socket} = useSocket();
-  
-  const sendCodeToServer =() => {
-    if(connected){
+  const sendCodeToServer = () => {
+    if (connected) {
       setRunning(true);
-      socket.emit('code', ({
-        code : currentCode,
-        language : currentLanguage
-      }))
+      socket.emit('code', {
+        code: currentCode,
+        language: currentLanguage,
+      });
     }
-  }
+  };
 
-  useEffect(() => {
-
-  },[socket])
+  useEffect(() => {}, [socket]);
 
   return (
-    <div style={{ padding: '20px', backgroundColor: '#001f3d', minHeight: '90vh' }}>
-        <DisconnectedMessage connected={connected} />
-      <Row gutter={16} align="top">
-        {/* Language Selector Column */}
-        <Col xs={22} sm={22} md={22} lg={22} xl={22}>
-          <LanguageSelector/>
+    <div style={{ padding: '20px', backgroundColor: '#001f3d', minHeight: '100vh', color: '#fff' }}>
+      <DisconnectedMessage connected={connected} />
+      <Row gutter={[16, 16]} align="top" justify="center">
+        {/* Language Selector and Actions */}
+        <Col xs={24}>
+          <Card style={{ backgroundColor: '#00274d', borderRadius: '8px' }}>
+            <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+              <LanguageSelector />
+              <Row justify="space-between" align="middle">
+                <Col>
+                  <Button
+                    type="primary"
+                    disabled={running}
+                    onClick={sendCodeToServer}
+                    style={{ width: '120px' }}
+                  >
+                    {running ? <Spin /> : 'Run'}
+                  </Button>
+                </Col>
+                <Col>
+                  <Button
+                    type="default"
+                    onClick={() => setCurrentOutput('')}
+                    style={{ width: '120px' }}
+                  >
+                    Clear
+                  </Button>
+                </Col>
+              </Row>
+            </Space>
+          </Card>
         </Col>
 
-        <Col >
-          <Button disabled={running} onClick={sendCodeToServer}>
-
-            {running=== true ? (<>
-              <Spin />
-            </>) : "Run"}
-
-          </Button>
+        {/* Main Content: Code Editor and Output */}
+        <Col xs={24} lg={16}>
+          <Card
+            title="Code Editor"
+            style={{ backgroundColor: '#00274d', borderRadius: '8px' }}
+          >
+            <CodeEditor language={currentLanguage} />
+          </Card>
         </Col>
 
-        <Col >
-          <Button onClick={() => {
-            setCurrentOutput("")
-          }}>Clear</Button>
+        <Col xs={24} lg={8}>
+          <Card
+            title="Output"
+            style={{ backgroundColor: '#00274d', borderRadius: '8px' }}
+          >
+            <CodeOutput />
+          </Card>
         </Col>
+      </Row>
 
-        {/* Code Editor Column */}
-        <Col xs={24} sm={24} md={12} lg={16} xl={18}>
-          <CodeEditor language={currentLanguage} />
-        </Col>
-
-        {/* Code Output Column */}
-        <Col xs={24} sm={24} md={12} lg={8} xl={6}>
-          <CodeOutput />
+      {/* Footer */}
+      <Divider style={{ backgroundColor: '#003a6b' }} />
+      <Row justify="center">
+        <Col>
+          <p style={{ color: '#ccc', textAlign: 'center' }}>
+            Built with ❤️ using React and Ant Design
+          </p>
         </Col>
       </Row>
     </div>
