@@ -5,7 +5,7 @@ A powerful and user-friendly tool that allows you to write, compile, and execute
 
 ## Installation
 
-## Prerequisites
+### Prerequisites
 
 Before you begin, ensure you have the following installed on your system:
 
